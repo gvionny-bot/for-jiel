@@ -1,0 +1,101 @@
+<script>
+  const canvas = document.getElementById("loveCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Menghitung ukuran canvas agar pas di layar HP (anti-kepotong)
+  function resizeCanvas() {
+    const padding = 20; // Memberi jarak aman dari pinggiran layar HP
+    const size = Math.min(window.innerWidth - padding, window.innerHeight - padding, 550);
+    
+    canvas.width = size;
+    canvas.height = size;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  function heart(t) {
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t)
+            - 5 * Math.cos(2*t)
+            - 2 * Math.cos(3*t)
+            - Math.cos(4*t);
+    return [x, -y];
+  }
+
+  let time = 0;
+  const texts = [];
+  const total = 45; 
+  for (let i = 0; i < total; i++) {
+    texts.push({ offset: i * (2 * Math.PI / total) });
+  }
+
+  function draw(){
+    const W = canvas.width;
+    const H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    
+    // Skala dinamis mengikuti ukuran layar HP
+    const baseScale = W / 43; 
+    const centerFontSize = Math.max(13, W / 26); // Font Comic Sans mengecil otomatis di HP kecil
+    const outerFontSize = baseScale * 0.082;     
+
+    // --- 1. TEKS TENGAH (Comic Sans Kembali!) ---
+    ctx.save();
+    ctx.translate(W / 2, H / 2 - (baseScale * 0.9)); 
+    // Mengunci font ke Comic Sans MS asli
+    ctx.font = `bold ${centerFontSize}px 'Comic Sans MS', 'Comic Sans', sans-serif`; 
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    
+    const lines = [
+      "gimana hari ini jiel?",
+      "ada yang mau di ceritain ga?"
+    ];
+    const lineHeight = centerFontSize * 1.45; // Jarak antar baris teks tengah
+    
+    lines.forEach((line, index) => {
+      const centerWave = Math.sin(time / 50) * (W * 0.005); 
+      const yOffset = (index - 0.5) * lineHeight + centerWave;
+      ctx.fillText(line, 0, yOffset);
+    });
+    ctx.restore();
+
+    // --- 2. TEKS KELILING BENTUK HATI ---
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(baseScale, baseScale); 
+    
+    texts.forEach((txt, i) => {
+      const t = (time / 1000 + txt.offset) % (2 * Math.PI);
+      const [x, y] = heart(t);
+      ctx.save();
+      ctx.translate(x, y);
+      
+      ctx.font = `${outerFontSize}px 'Pacifico', cursive, sans-serif`;
+      ctx.textAlign = "center";
+      
+      const gradient = ctx.createLinearGradient(-2, 0, 2, 0);
+      gradient.addColorStop(0, "#ffffff");   
+      gradient.addColorStop(0.5, "#ff4d6d"); 
+      gradient.addColorStop(1, "#ff0000");   
+      ctx.fillStyle = gradient;
+      
+      const text = "haiii jieell";
+      for (let j = 0; j < text.length; j++) {
+        const waveY = Math.sin(time / 30 + j + i) * 0.23;
+        ctx.save();
+        ctx.translate(j * 0.60 - (text.length * 0.30), waveY); 
+        ctx.fillText(text[j], 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    });
+    ctx.restore();
+    
+    time += 1; 
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+</script>
